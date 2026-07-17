@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Git SSH 配置终极指南 | Yang's Blog</title>
+<style>
+:root { --bg: #0d1117; --text: #c9d1d9; --muted: #8b949e; --accent: #58a6ff; --border: #30363d; --green: #3fb950; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:var(--bg); color:var(--text); line-height:1.8; }
+article { max-width:800px; margin:0 auto; padding:40px 20px; }
+h1 { font-size:2em; margin-bottom:8px; }
+h2 { font-size:1.3em; margin:32px 0 12px; border-bottom:1px solid var(--border); padding-bottom:6px; }
+h3 { font-size:1.1em; margin:20px 0 8px; }
+p { margin-bottom:12px; }
+pre { background:#161b22; border:1px solid var(--border); border-radius:6px; padding:14px 18px; overflow-x:auto; margin:14px 0; font-size:0.9em; line-height:1.5; }
+code { font-family:'JetBrains Mono','Fira Code',monospace; font-size:0.9em; }
+blockquote { border-left:3px solid var(--accent); padding:10px 18px; margin:16px 0; background:rgba(88,166,255,0.05); border-radius:0 8px 8px 0; color:var(--muted); }
+time,.meta { color:var(--muted); font-size:0.9em; }
+a { color:var(--accent); }
+.back { display:inline-block; margin-bottom:30px; color:var(--muted); text-decoration:none; }
+.back:hover { color:var(--accent); }
+.warn { background:rgba(255,166,0,0.08); border-left:3px solid #f0883e; padding:12px 18px; margin:16px 0; border-radius:0 8px 8px 0; }
+</style>
+</head>
+<body>
+<article>
+<a class="back" href="/">← 返回首页</a>
+
+<h1>🔐 Git SSH 配置终极指南</h1>
+<time>2026-07-16 · 3 分钟搞定 · 永久生效</time>
+
+<blockquote>告别密码输入和 TLS 报错。用 Ed25519 + SSH，一次配置，终身受益。</blockquote>
+
+<h2>为什么要用 SSH？</h2>
+
+<p>HTTPS 方式有三大痛点：</p>
+<ul>
+  <li>⚠️ TLS 握手经常失败（尤其 WSL 环境）</li>
+  <li>⚠️ Token 会过期，忘了更新就 push 不了</li>
+  <li>⚠️ 每次操作都要验证，烦</li>
+</ul>
+
+<p>SSH 的优势：密钥永不过期、不需要密码、TLS 不稳定的环境也能稳定推送。</p>
+
+<h2>第一步：生成 Ed25519 密钥</h2>
+
+<pre><code>ssh-keygen -t ed25519 -C "your@email.com"</code></pre>
+
+<p>一路回车即可。密钥保存在 <code>~/.ssh/id_ed25519</code>（私钥）和 <code>~/.ssh/id_ed25519.pub</code>（公钥）。</p>
+
+<div class="warn">
+  <strong>⚠️ 为什么是 Ed25519？</strong> 比 RSA 更短（256bit vs 4096bit）、更快、更安全。GitHub/GitLab/Bitbucket 三家都推荐。
+</div>
+
+<h2>第二步：添加公钥到 GitHub</h2>
+
+<pre><code>cat ~/.ssh/id_ed25519.pub</code></pre>
+
+<p>复制输出内容 → 打开 <a href="https://github.com/settings/keys">github.com/settings/keys</a> → New SSH Key → 粘贴 → 保存。</p>
+
+<h2>第三步：测试连接</h2>
+
+<pre><code>ssh -T git@github.com</code></pre>
+
+<p>看到 <code>Hi yourname! You've successfully authenticated</code> 就成功了。</p>
+
+<h2>第四步：切换仓库到 SSH</h2>
+
+<pre><code>cd 你的仓库
+git remote set-url origin git@github.com:用户名/仓库名.git
+git push</code></pre>
+
+<h2>进阶：多密钥管理</h2>
+
+<p>如果你有 GitHub 和 GitLab 两个账号，用不同密钥：</p>
+
+<pre><code># 生成两个密钥
+ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_github -C "github@email"
+ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_gitlab -C "gitlab@email"
+
+# 配置 ~/.ssh/config
+Host github.com
+  HostName github.com
+  IdentityFile ~/.ssh/id_ed25519_github
+
+Host gitlab.com
+  HostName gitlab.com
+  IdentityFile ~/.ssh/id_ed25519_gitlab</code></pre>
+
+<h2>常见问题</h2>
+
+<p><strong>Q: Permission denied (publickey)</strong><br>
+→ 公钥没上传到 GitHub，或者 ssh-agent 没加载私钥。执行 <code>ssh-add ~/.ssh/id_ed25519</code></p>
+
+<p><strong>Q: 端口 22 被防火墙封了</strong><br>
+→ 用 HTTPS 端口：<code>ssh -T -p 443 git@ssh.github.com</code></p>
+
+<p><strong>Q: 换了电脑怎么办</strong><br>
+→ 在新电脑上重新生成密钥并上传。不要复制私钥，每台机器独立密钥更安全。</p>
+
+<hr>
+<p style="color:var(--muted);font-size:0.85em;">本文由实操经验总结，适用于 GitHub/GitLab/Gitee 等所有 Git 托管平台。</p>
+</article>
+</body>
+</html>
