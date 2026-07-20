@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Windows 安装 GitHub CLI 完全指南 | Yang's Blog</title>
+<style>
+:root { --bg:#0d1117; --text:#c9d1d9; --muted:#8b949e; --accent:#58a6ff; --border:#30363d; --green:#3fb950; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:var(--bg); color:var(--text); line-height:1.8; }
+article { max-width:800px; margin:0 auto; padding:40px 20px; }
+h1 { font-size:2em; margin-bottom:8px; color:#fff; }
+h2 { font-size:1.3em; margin:36px 0 14px; padding-bottom:6px; border-bottom:1px solid var(--border); }
+h3 { margin:24px 0 8px; color:#e6edf3; }
+p { margin-bottom:14px; }
+pre { background:#161b22; border:1px solid var(--border); border-radius:6px; padding:14px 18px; overflow-x:auto; margin:14px 0; font-size:0.88em; }
+code { font-family:'JetBrains Mono',monospace; font-size:0.88em; background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:3px; }
+pre code { background:none; padding:0; }
+blockquote { border-left:3px solid var(--accent); padding:10px 18px; margin:16px 0; background:rgba(88,166,255,0.05); border-radius:0 8px 8px 0; color:var(--muted); }
+table { width:100%; border-collapse:collapse; margin:16px 0; font-size:0.92em; }
+th,td { border:1px solid var(--border); padding:10px 14px; text-align:left; }
+th { background:rgba(255,255,255,0.03); color:var(--accent); }
+time { color:var(--muted); font-size:0.9em; }
+a { color:var(--accent); }
+.back { display:inline-block; margin-bottom:30px; color:var(--muted); text-decoration:none; }
+.back:hover { color:var(--accent); }
+.box { background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:8px; padding:18px 20px; margin:16px 0; }
+ul,ol { margin:10px 0 10px 24px; }
+li { margin-bottom:6px; }
+</style>
+</head>
+<body>
+<article>
+<a class="back" href="/">← 返回首页</a>
+
+<h1>🖥️ Windows 安装 GitHub CLI 完全指南</h1>
+<time>2026-07-17 · 四种安装方式 + 横向对比</time>
+
+<blockquote>GitHub CLI（gh）是 GitHub 官方命令行工具。本文对比四种 Windows 安装方式，分析 winget 管理员/普通用户的区别，并回答一个根本问题：gh CLI 到底有什么用？</blockquote>
+
+<h2>一、横向分析：四种安装方式对比</h2>
+
+<table>
+  <tr><th>方式</th><th>命令</th><th>难度</th><th>推荐指数</th></tr>
+  <tr><td>🟢 winget</td><td><code>winget install --id GitHub.cli</code></td><td>⭐</td><td>★★★★★</td></tr>
+  <tr><td>🔵 Scoop</td><td><code>scoop install gh</code></td><td>⭐⭐</td><td>★★★★</td></tr>
+  <tr><td>🟡 Chocolatey</td><td><code>choco install gh</code></td><td>⭐⭐</td><td>★★★</td></tr>
+  <tr><td>🔴 手动解压</td><td>下载 zip → 解压 → 加 PATH</td><td>⭐⭐⭐</td><td>★★</td></tr>
+</table>
+
+<h3>方式一：winget（推荐）</h3>
+<p>Windows 自带，不需要装任何东西：</p>
+<pre><code>winget install --id GitHub.cli</code></pre>
+<p>装完关掉重开 PowerShell，<code>gh --version</code> 验证。</p>
+
+<h3>方式二：Scoop</h3>
+<pre><code>Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+irm get.scoop.sh | iex
+scoop install gh</code></pre>
+
+<h3>方式三：Chocolatey</h3>
+<pre><code>choco install gh</code></pre>
+
+<h3>方式四：手动解压</h3>
+<p>下载 zip（非 msi）：<a href="https://github.com/cli/cli/releases/latest">github.com/cli/cli/releases</a><br>
+选 <code>gh_X.X.X_windows_amd64.zip</code>，解压到 <code>C:\gh\</code>，加到系统 PATH。</p>
+
+<h2>二、winget 管理员 vs 普通用户</h2>
+
+<table>
+  <tr><th>维度</th><th>普通用户</th><th>管理员</th></tr>
+  <tr><td>安装位置</td><td><code>%LOCALAPPDATA%</code></td><td><code>C:\Program Files\</code></td></tr>
+  <tr><td>影响范围</td><td>只装给自己</td><td>这台电脑所有人</td></tr>
+  <tr><td>UAC 弹窗</td><td>不需要</td><td>需要点「是」</td></tr>
+  <tr><td>PATH</td><td>自动加（可能不全）</td><td>自动加，全局生效</td></tr>
+</table>
+
+<blockquote>建议用普通用户跑就行。省事，不弹窗，效果完全一样。</blockquote>
+
+<h2>三、gh CLI 有什么用？</h2>
+
+<p>gh 不只是「另一个 Git 工具」。它把 GitHub 的整个 Web 操作搬到了终端：</p>
+
+<h3>3.1 认证管理</h3>
+<pre><code>gh auth login          # 浏览器授权，比 SSH/Token 都简单
+gh auth status         # 查看登录状态</code></pre>
+
+<h3>3.2 仓库操作</h3>
+<pre><code>gh repo create my-project --public   # 创建仓库
+gh repo clone owner/repo             # 克隆
+gh repo view owner/repo --web        # 浏览器打开</code></pre>
+
+<h3>3.3 Issue 和 PR</h3>
+<pre><code>gh issue create --title "Bug: xxx" --body "..."
+gh issue list
+gh pr create --title "Feature" --body "..."
+gh pr review --approve
+gh pr merge</code></pre>
+
+<h3>3.4 CI/CD</h3>
+<pre><code>gh run watch           # 实时看 Actions 日志
+gh run list            # 查看工作流历史</code></pre>
+
+<h3>3.5 Release</h3>
+<pre><code>gh release create v1.0 --title "正式版" --notes "更新内容"</code></pre>
+
+<h2>四、和 Git 的关系</h2>
+
+<p>很多人混淆 gh 和 git：</p>
+
+<table>
+  <tr><th></th><th>git</th><th>gh</th></tr>
+  <tr><td>定位</td><td>分布式版本控制</td><td>GitHub 平台操作</td></tr>
+  <tr><td>操作范围</td><td>任何 Git 仓库</td><td>仅 GitHub</td></tr>
+  <tr><td>典型命令</td><td>commit, push, merge</td><td>issue, pr, release</td></tr>
+  <tr><td>替代关系</td><td colspan="2">互不替代，是互补</td></tr>
+</table>
+
+<blockquote>git 管代码版本，gh 管 GitHub 平台——各司其职，配合使用。</blockquote>
+
+<h2>五、为什么需要 gh？</h2>
+
+<p>三种 GitHub 认证方式的横向对比：</p>
+
+<table>
+  <tr><th></th><th>SSH</th><th>HTTPS + PAT</th><th>gh CLI</th></tr>
+  <tr><td>设置难度</td><td>密钥生成→上传</td><td>网页生成Token</td><td>一行 login</td></tr>
+  <tr><td>安全性</td><td>★★★★★</td><td>★★★</td><td>★★★★</td></tr>
+  <tr><td>WSL 稳定性</td><td>★★★★★</td><td>★★（TLS 常挂）</td><td>★★★★</td></tr>
+  <tr><td>Issue/PR 操作</td><td>不支持</td><td>不支持</td><td>支持</td></tr>
+</table>
+
+<p><strong>最佳实践：</strong> git push/pull 用 SSH（稳定），Issue/PR/Release 用 gh CLI（方便）。两者互补，不是替代。</p>
+
+<hr>
+<p style="color:var(--muted);font-size:0.85em;">作者：Yang Huyue · 2026-07-17 · 基于实际操作经验撰写</p>
+</article>
+</body>
+</html>
