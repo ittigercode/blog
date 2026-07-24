@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>阿里云百炼 CLI 安装与 AI 画图实战 | Yang's Blog</title>
+<style>
+:root { --bg:#0d1117; --text:#c9d1d9; --muted:#8b949e; --accent:#58a6ff; --border:#30363d; --green:#3fb950; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:var(--bg); color:var(--text); line-height:1.8; }
+article { max-width:800px; margin:0 auto; padding:40px 20px; }
+h1 { font-size:2em; margin-bottom:8px; color:#fff; }
+h2 { font-size:1.3em; margin:36px 0 14px; padding-bottom:6px; border-bottom:1px solid var(--border); }
+h3 { margin:24px 0 8px; color:#e6edf3; }
+p { margin-bottom:14px; }
+pre { background:#161b22; border:1px solid var(--border); border-radius:6px; padding:14px 18px; overflow-x:auto; margin:14px 0; font-size:0.88em; }
+code { font-family:'JetBrains Mono',monospace; font-size:0.88em; background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:3px; }
+pre code { background:none; padding:0; }
+blockquote { border-left:3px solid var(--accent); padding:10px 18px; margin:16px 0; background:rgba(88,166,255,0.05); border-radius:0 8px 8px 0; color:var(--muted); }
+table { width:100%; border-collapse:collapse; margin:16px 0; font-size:0.92em; }
+th,td { border:1px solid var(--border); padding:10px 14px; text-align:left; }
+th { background:rgba(255,255,255,0.03); color:var(--accent); }
+time { color:var(--muted); font-size:0.9em; }
+a { color:var(--accent); }
+.back { display:inline-block; margin-bottom:30px; color:var(--muted); text-decoration:none; }
+.back:hover { color:var(--accent); }
+.box { background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:8px; padding:18px 20px; margin:16px 0; }
+ul,ol { margin:10px 0 10px 24px; }
+li { margin-bottom:6px; }
+</style>
+</head>
+<body>
+<article>
+<a class="back" href="/">← 返回首页</a>
+
+<h1>🎨 阿里云百炼 CLI 安装与 AI 画图实战</h1>
+<time>2026-07-24 · 从零到生成第一张 AI 图片</time>
+
+<blockquote>阿里云百炼 CLI（bailian-cli）是阿里云官方命令行工具，支持文本对话、图片生成、应用管理等。本文从安装到鉴权到实战，10 分钟搞定。</blockquote>
+
+<h2>一、环境要求</h2>
+
+<table>
+  <tr><th>依赖</th><th>最低版本</th><th>检查命令</th></tr>
+  <tr><td>Node.js</td><td>≥ 22.12.0</td><td><code>node -v</code></td></tr>
+  <tr><td>npm</td><td>任意新版</td><td><code>npm -v</code></td></tr>
+</table>
+
+<h2>二、安装 CLI</h2>
+
+<pre><code>npm install -g bailian-cli</code></pre>
+
+验证：
+
+<pre><code>bl --version   # 应输出版本号
+which bl       # 确认在 PATH 中</code></pre>
+
+<div class="box">
+<strong>注意：</strong>只能用 npm 安装，不能用 pnpm 或 yarn。如果报 <code>engines</code> 错误，升级 Node.js。
+</div>
+
+<h2>三、安装 Skills</h2>
+
+<pre><code>npx skills add modelstudioai/cli --all -g</code></pre>
+
+这会把百炼的 Agent Skill 安装到所有支持的 AI Agent 工具中（Cursor、Claude Code、Hermes 等）。
+
+<h2>四、鉴权（二选一）</h2>
+
+<h3>方式 A：浏览器登录（推荐）</h3>
+
+<pre><code>bl auth login --console</code></pre>
+
+自动拉起浏览器完成阿里云控制台授权，不用手动复制 Key。
+
+<h3>方式 B：API Key 登录</h3>
+
+<ol>
+  <li>去 <a href="https://bailian.console.aliyun.com">百炼控制台</a> 获取 API Key</li>
+  <li><code>bl auth login --api-key ***</code></li>
+</ol>
+
+验证：
+
+<pre><code>bl auth status --output json</code></pre>
+
+<h2>五、实战：AI 画图</h2>
+
+<h3>5.1 一句话生成图片</h3>
+
+<pre><code>bl image generate --prompt "纯黑色夏日男装T恤产品主图"</code></pre>
+
+<h3>5.2 支持的能力</h3>
+
+| 功能 | 命令 |
+|------|------|
+| 💬 文本对话 | `bl text chat --message "你好"` |
+| 🎨 图片生成 | `bl image generate --prompt "..."` |
+| 📱 应用列表 | `bl app list` |
+| 📊 用量查询 | `bl usage free` |
+
+<h3>5.3 图片输出路径</h3>
+
+<p>生成的图片默认保存到 <code>~/bailian-output/images/</code>。</p>
+
+<h2>六、与 Hermes 配合</h2>
+
+<p>百炼 CLI 的 Key 和 DashScope 是同一套，配置到 Hermes：</p>
+
+<pre><code># ~/.hermes/.env
+DASHSCOPE_API_KEY=***   # 百炼 Key 直接复用
+DASHSCOPE_WORKSPACE_ID=你的ID
+DASHSCOPE_REGION=cn-beijing</code></pre>
+
+<p>配好后，手绘幻灯片 Skill 就能用这个 Key 生成图片了。</p>
+
+<h2>七、总结</h2>
+
+<table>
+  <tr><th>步骤</th><th>耗时</th></tr>
+  <tr><td>npm install</td><td>10 秒</td></tr>
+  <tr><td>npx skills add</td><td>20 秒</td></tr>
+  <tr><td>bl auth login</td><td>10 秒</td></tr>
+  <tr><td>生成第一张图</td><td>5 秒</td></tr>
+</table>
+
+<p>全过程不到 1 分钟。百炼 CLI 弥合了 Hermes 不能直接画图的短板，Key 复用 DashScope，一套凭据两处用。</p>
+
+<blockquote>下一篇预告：用百炼 Key 驱动手绘幻灯片 Skill，把博客文章一键转成手绘风 PPT 配图。</blockquote>
+
+<hr>
+<p style="color:var(--muted);font-size:0.85em;">作者：Yang Huyue · 2026-07-24</p>
+</article>
+</body>
+</html>
