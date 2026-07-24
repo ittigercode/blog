@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hermes 模型 API Key 配置完全指南 | Yang's Blog</title>
+<style>
+:root { --bg:#0d1117; --text:#c9d1d9; --muted:#8b949e; --accent:#58a6ff; --border:#30363d; --green:#3fb950; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:var(--bg); color:var(--text); line-height:1.8; }
+article { max-width:800px; margin:0 auto; padding:40px 20px; }
+h1 { font-size:2em; margin-bottom:8px; color:#fff; }
+h2 { font-size:1.3em; margin:36px 0 14px; padding-bottom:6px; border-bottom:1px solid var(--border); }
+h3 { margin:24px 0 8px; color:#e6edf3; }
+p { margin-bottom:14px; }
+pre { background:#161b22; border:1px solid var(--border); border-radius:6px; padding:14px 18px; overflow-x:auto; margin:14px 0; font-size:0.88em; }
+code { font-family:'JetBrains Mono',monospace; font-size:0.88em; background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:3px; }
+pre code { background:none; padding:0; }
+blockquote { border-left:3px solid var(--accent); padding:10px 18px; margin:16px 0; background:rgba(88,166,255,0.05); border-radius:0 8px 8px 0; color:var(--muted); }
+table { width:100%; border-collapse:collapse; margin:16px 0; font-size:0.92em; }
+th,td { border:1px solid var(--border); padding:10px 14px; text-align:left; }
+th { background:rgba(255,255,255,0.03); color:var(--accent); }
+time { color:var(--muted); font-size:0.9em; }
+a { color:var(--accent); }
+.back { display:inline-block; margin-bottom:30px; color:var(--muted); text-decoration:none; }
+.back:hover { color:var(--accent); }
+.box { background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:8px; padding:18px 20px; margin:16px 0; }
+ul,ol { margin:10px 0 10px 24px; }
+li { margin-bottom:6px; }
+</style>
+</head>
+<body>
+<article>
+<a class="back" href="/">← 返回首页</a>
+
+<h1>🔑 Hermes 模型 API Key 配置完全指南</h1>
+<time>2026-07-23 · 从千问到全模型，一篇讲透</time>
+
+<blockquote>本文以千问（Qwen/DashScope）API Key 为切入点，手把手教你申请密钥、配置到 Hermes、让 Skill 调用——最后横向扩展到 OpenAI、DeepSeek、Anthropic 等所有主要模型的配置异同。</blockquote>
+
+<h2>一、申请千问（DashScope）API Key</h2>
+
+<h3>1.1 三步拿到 Key</h3>
+
+<ol>
+  <li>打开 <a href="https://dashscope.aliyun.com">dashscope.aliyun.com</a>，用阿里云账号登录</li>
+  <li>右上角头像 → <strong>API-KEY 管理</strong></li>
+  <li>点 <strong>创建 API-KEY</strong> → 立即复制保存（只显示一次！）</li>
+</ol>
+
+<h3>1.2 创建工作空间</h3>
+
+<p>千问画图（Qwen Image）还需要工作空间：</p>
+
+<ol>
+  <li>打开 <a href="https://dashscope.console.aliyun.com">dashscope.console.aliyun.com</a></li>
+  <li>创建或选择一个 <strong>工作空间</strong></li>
+  <li>记下 <strong>Workspace ID</strong>（页面左上角）</li>
+</ol>
+
+<div class="box">
+<strong>💰 费用：</strong>新用户有免费额度。千问文本模型（qwen-turbo/plus/max）很便宜，画图稍贵但试手够用。
+</div>
+
+<h2>二、Hermes 配置千问 API Key</h2>
+
+<h3>2.1 核心：token 填在哪里</h3>
+
+<p>Hermes 不强制要求配置 API Key——为「自带密钥」模型提供 API Key 即可使用。所有模型的 API Key 统一放在：</p>
+
+<pre><code>~/.hermes/.env</code></pre>
+
+<p>直接用你喜欢的文本编辑器打开这个文件，添加以下内容：</p>
+
+<pre><code># 千问 / DashScope
+DASHSCOPE_API_KEY=***   # 你的 API Key
+DASHSCOPE_WORKSPACE_ID=你的工作空间ID
+DASHSCOPE_REGION=cn-beijing            # 或 singapore</code></pre>
+
+<div class="box">
+<strong>环境变量加载时机：</strong>每次 Hermes 启动时读取。修改后需要重启（<code>/reset</code> 或重新运行 <code>hermes chat</code>）。运行时也可用 <code>/reload</code> 重新加载。
+</div>
+
+<p><strong>为什么其他 Key 也要放 .env 而不是 config.yaml？</strong> config.yaml 是配置文件，可以提交到版本控制。.env 是敏感信息，Hermes 会阻止 AI 读取它（防泄露），且通常被 .gitignore。</p>
+
+<h2>三、Skill 如何使用千问 API Key</h2>
+
+<h3>3.1 Skill 不会主动读 .env</h3>
+
+<p>Skill 本身只是一个 Markdown 文档，它不直接读环境变量。真正调用 API 的是 Skill 里的 <strong>Python 脚本</strong>：</p>
+
+<pre><code># Skill 里的脚本按需读取环境变量
+python3 scripts/generate_image.py --preflight
+# 脚本内部检查 os.environ.get("DASHSCOPE_API_KEY")
+# 退出码 5 = 缺少 Key，退出码 0 = 已配置</code></pre>
+
+<h3>3.2 以手绘幻灯片 Skill 为例</h3>
+
+<p>手绘幻灯片包（handdrawn-slide-skill-pack）的 Qwen 路径执行流程：</p>
+
+<pre><code># 1. 预检：只检查依赖和Key，不联网不收费
+python3 scripts/generate_image.py --preflight
+
+# 2. 试跑：验证请求格式，不联网
+python3 scripts/generate_image.py --request page.json --output page.png --dry-run
+
+# 3. 正式生成：发起计费API调用
+python3 scripts/generate_image.py --request page.json --output page.png</code></pre>
+
+<p><strong>关键设计：</strong> Skill 脚本从当前会话的环境变量中读取 Key，不把 Key 写在 Skill 目录里。这样 Skill 可以分享给任何人，不会泄露秘钥。</p>
+
+<h2>四、横向扩展：所有模型配置对比</h2>
+
+<h3>4.1 共同之处</h3>
+
+<table>
+  <tr><th>规则</th><th>说明</th></tr>
+  <tr><td>统一放 .env</td><td>所有 API Key 都在 <code>~/.hermes/.env</code>，不散落各处</td></tr>
+  <tr><td>变量名规范</td><td>全大写，下划线分隔，_API_KEY 结尾</td></tr>
+  <tr><td>启动时加载</td><td>Hermes 启动时读取 .env，之后可用 /reload 热更新</td></tr>
+  <tr><td>SKILL 不存 Key</td><td>Skill 脚本通过 os.environ 读取，不硬编码</td></tr>
+  <tr><td>Token 被 Heres 防泄漏</td><td>终端输出、read_file 都会自动打码 ***</td></tr>
+</table>
+
+<h3>4.2 各模型配置差异</h3>
+
+<table>
+  <tr><th>模型</th><th>环境变量</th><th>是否需要额外配置</th><th>Key 申请地址</th></tr>
+  <tr><td>🔵 OpenAI</td><td><code>OPENAI_API_KEY</code></td><td>无</td><td>platform.openai.com</td></tr>
+  <tr><td>🟣 Anthropic</td><td><code>ANTHROPIC_API_KEY</code></td><td>无</td><td>console.anthropic.com</td></tr>
+  <tr><td>🟢 DeepSeek</td><td><code>DEEPSEEK_API_KEY</code></td><td>无</td><td>platform.deepseek.com</td></tr>
+  <tr><td>🔴 千问</td><td><code>DASHSCOPE_API_KEY</code><br><code>DASHSCOPE_WORKSPACE_ID</code><br><code>DASHSCOPE_REGION</code></td><td><strong>需要3个变量</strong></td><td>dashscope.aliyun.com</td></tr>
+  <tr><td>🟡 Google</td><td><code>GOOGLE_API_KEY</code></td><td>无</td><td>aistudio.google.com</td></tr>
+  <tr><td>⚫ xAI</td><td><code>XAI_API_KEY</code></td><td>无</td><td>console.x.ai</td></tr>
+  <tr><td>🟠 月之暗面</td><td><code>MOONSHOT_API_KEY</code></td><td>无</td><td>platform.moonshot.cn</td></tr>
+</table>
+
+<h3>4.3 千问的特殊性</h3>
+
+<p>千问是少数需要<strong>三个环境变量</strong>的模型：</p>
+
+<div class="box">
+<code>DASHSCOPE_API_KEY</code> — 认证密钥（所有模型都需要）<br>
+<code>DASHSCOPE_WORKSPACE_ID</code> — 千问特色，类似 OpenAI 的 Organization ID<br>
+<code>DASHSCOPE_REGION</code> — 数据节点选择（beijing / singapore）
+</div>
+
+<p>大部分模型只需要一个 KEY 变量。千问多出来的两个变量是因为阿里云的工作空间架构和地域节点设计。</p>
+
+<h2>五、Hermes 高级配置</h2>
+
+<h3>5.1 切换默认模型</h3>
+
+<pre><code>hermes model          # 交互式选择
+hermes chat -m deepseek/deepseek-chat   # 临时指定</code></pre>
+
+<h3>5.2 配置多 Provider</h3>
+
+<p>在 <code>~/.hermes/config.yaml</code> 中：</p>
+
+<pre><code>model:
+  default: "deepseek/deepseek-chat"
+  provider: "deepseek"</code></pre>
+
+<h3>5.3 使用 OpenRouter（一个 Key 调用所有模型）</h3>
+
+<pre><code># .env
+OPENROUTER_API_KEY=***   # 一个 Key 就能用 200+ 模型
+
+# 使用
+hermes chat -m anthropic/claude-sonnet-4
+hermes chat -m google/gemini-2.5-pro</code></pre>
+
+<div class="box">
+<strong>推荐：</strong>如果你不想每个模型都申请 Key，用 <a href="https://openrouter.ai">OpenRouter</a>。一个 Key，调用 200+ 模型，按量付费，不用在各个平台之间切来切去。
+</div>
+
+<h2>六、总结</h2>
+
+<table>
+  <tr><th>层次</th><th>要点</th></tr>
+  <tr><td>🔑 申请</td><td>各模型官网 → API Key 管理 → 创建 → 复制</td></tr>
+  <tr><td>⚙️ 配置</td><td>填到 <code>~/.hermes/.env</code>，变量名参照上表</td></tr>
+  <tr><td>🎨 Skill</td><td>脚本通过 <code>os.environ</code> 读取，.env 统一管理</td></tr>
+  <tr><td>🔄 通用性</td><td>所有模型遵循同一套 .env 范式，差异仅在于变量名和数量</td></tr>
+</table>
+
+<blockquote>核心原则：绝不在代码或 Skill 目录里硬编码 Key。所有秘钥统一由 ~/.hermes/.env 管理，Hermes 自动加载、自动防泄漏。换模型只需改一行环境变量。</blockquote>
+
+<hr>
+<p style="color:var(--muted);font-size:0.85em;">作者：Yang Huyue · 2026-07-23 · 基于实际操作经验</p>
+</article>
+</body>
+</html>
