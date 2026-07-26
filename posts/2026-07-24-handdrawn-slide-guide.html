@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>手绘幻灯片 Skill 实战全记录 | Yang's Blog</title>
+<style>
+:root { --bg:#0d1117; --text:#c9d1d9; --muted:#8b949e; --accent:#58a6ff; --border:#30363d; --green:#3fb950; --red:#f85149; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:var(--bg); color:var(--text); line-height:1.8; }
+article { max-width:800px; margin:0 auto; padding:40px 20px; }
+h1 { font-size:2em; margin-bottom:8px; color:#fff; }
+h2 { font-size:1.3em; margin:36px 0 14px; padding-bottom:6px; border-bottom:1px solid var(--border); }
+h3 { margin:24px 0 8px; color:#e6edf3; }
+p { margin-bottom:14px; }
+pre { background:#161b22; border:1px solid var(--border); border-radius:6px; padding:14px 18px; overflow-x:auto; margin:14px 0; font-size:0.88em; }
+code { font-family:'JetBrains Mono',monospace; font-size:0.88em; background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:3px; }
+pre code { background:none; padding:0; }
+blockquote { border-left:3px solid var(--accent); padding:10px 18px; margin:16px 0; background:rgba(88,166,255,0.05); border-radius:0 8px 8px 0; color:var(--muted); }
+table { width:100%; border-collapse:collapse; margin:16px 0; font-size:0.92em; }
+th,td { border:1px solid var(--border); padding:10px 14px; text-align:left; }
+th { background:rgba(255,255,255,0.03); color:var(--accent); }
+tr:nth-child(even) td { background:rgba(255,255,255,0.01); }
+time { color:var(--muted); font-size:0.9em; }
+a { color:var(--accent); }
+.back { display:inline-block; margin-bottom:30px; color:var(--muted); text-decoration:none; }
+.back:hover { color:var(--accent); }
+.box { background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:8px; padding:18px 20px; margin:16px 0; }
+.warn { background:rgba(248,81,73,0.06); border-left:3px solid var(--red); padding:12px 18px; margin:16px 0; border-radius:0 8px 8px 0; }
+.good { background:rgba(63,185,80,0.06); border-left:3px solid var(--green); padding:12px 18px; margin:16px 0; border-radius:0 8px 8px 0; }
+ul,ol { margin:10px 0 10px 24px; }
+li { margin-bottom:6px; }
+</style>
+</head>
+<body>
+<article>
+<a class="back" href="/">← 返回首页</a>
+
+<h1>🎨 手绘幻灯片 Skill 实战全记录</h1>
+<time>2026-07-24 · 从踩坑到跑通的最全指南</time>
+
+<blockquote>handdrawn-slide-skill-pack 能把文章一键转成手绘风格幻灯片配图。本文记录从安装到跑通的全过程，包含 4 个关键难点的解决方案。</blockquote>
+
+<h2>一、Skill 是什么</h2>
+
+<p>一个双技能包：</p>
+
+<table>
+  <tr><th>技能</th><th>角色</th><th>功能</th></tr>
+  <tr><td><code>turning-articles-into-handdrawn-decks</code></td><td>编排层</td><td>读文章 → 拆页面 → 定义每页 brief</td></tr>
+  <tr><td><code>generating-handdrawn-slide-images</code></td><td>原子层</td><td>根据 brief 生成一张手绘 PNG</td></tr>
+</table>
+
+<p>两条生图路径：</p>
+<ul>
+  <li><strong>Qwen 直连</strong>：脚本直接调 DashScope API，一条命令出图</li>
+  <li><strong>Host-native 收口</strong>：外部工具画图 → 脚本校验清洗 → 交付</li>
+</ul>
+
+<h2>二、安装过程</h2>
+
+<h3>2.1 安装技能</h3>
+
+<pre><code>unzip handdrawn-slide-skill-pack-v1.2.0.zip
+cp -r handdrawn-slide-skill-pack/generating-handdrawn-slide-images ~/.hermes/skills/
+cp -r handdrawn-slide-skill-pack/turning-articles-into-handdrawn-decks ~/.hermes/skills/</code></pre>
+
+<h3>2.2 安装依赖</h3>
+
+<pre><code>pip install Pillow --break-system-packages</code></pre>
+
+<div class="warn">
+  <strong>难点 1：PEP 668 限制。</strong> Ubuntu 22.04+ 禁止全局 pip install。用 <code>--break-system-packages</code> 或创建 venv。
+</div>
+
+<h2>三、Qwen 路径：理想丰满，现实骨感</h2>
+
+<h3>3.1 理论流程</h3>
+
+<pre><code>export DASHSCOPE_API_KEY="***"
+export DASHSCOPE_WORKSPACE_ID="***"
+export DASHSCOPE_REGION="beijing"
+
+python3 scripts/generate_image.py --preflight
+python3 scripts/generate_image.py --request page.json --output page.png --dry-run
+python3 scripts/generate_image.py --request page.json --output page.png</code></pre>
+
+<h3>3.2 踩坑记录</h3>
+
+<div class="warn">
+  <strong>难点 2：需要三个环境变量，缺一不可。</strong><br>
+  <code>DASHSCOPE_API_KEY</code> + <code>DASHSCOPE_WORKSPACE_ID</code> + <code>DASHSCOPE_REGION</code>。其他模型只需一个 Key，千问需要三个。
+</div>
+
+<div class="warn">
+  <strong>难点 3：Workspace ID 获取路径变更。</strong><br>
+  百炼新平台已移除 Workspace 概念。需在 <code>bailian.console.aliyun.com</code> 创建应用获取。即使拿到正确的 ID，仍然失败。
+</div>
+
+<div class="warn">
+  <strong>难点 4：qwen-image-2.0-pro 模型不兼容。</strong><br>
+  脚本内置了 Pro 模型，但 API 调用反复报 exit 8（内容审核拒绝）和 exit 12（内部错误）。切换到标准版 <code>qwen-image-2.0</code> 也不行——脚本强校验模型名，只认 Pro 和 Pro 日期快照。
+</div>
+
+<h3>3.3 结论</h3>
+
+<blockquote>Qwen 直连路径在我（WSL + 百炼 Key）的环境下 <strong>无法跑通</strong>。核心矛盾：脚本锁定 Pro 模型，而 Pro 模型的 API 在当前环境下不兼容。</blockquote>
+
+<h2>四、Host-native 路径：山重水复后的柳暗花明</h2>
+
+<h3>4.1 核心思路</h3>
+
+<p>Qwen 直连不行，但 <code>bl image generate</code> 能正常画图。所以：</p>
+
+<pre><code>bl image generate → 生图 → skill --adopt 收口 → 校验 → 交付</code></pre>
+
+<h3>4.2 完整流程</h3>
+
+<p><strong>Step 1：创建页面描述</strong></p>
+
+<pre><code>cat > /tmp/page.json << 'EOF'
+{
+  "schema_version": 1,
+  "page_id": "page-01",
+  "prompt": "技术封面图，中文标题，白底黑字手绘线条",
+  "negative_prompt": "",
+  "role": "cover",
+  "target_ratio": "16:9"
+}
+EOF</code></pre>
+
+<p><strong>Step 2：用百炼 CLI 生成原始图</strong></p>
+
+<pre><code>bl image generate --prompt "技术封面图，标题，白底黑字手绘线条"</code></pre>
+
+<div class="good">
+  <strong>✅ 实测成功：</strong> 百炼的标准版 <code>qwen-image-2.0</code> 画图非常稳，不像 Pro 模型有各种审核问题。
+</div>
+
+<p><strong>Step 3：Skill 脚本收口</strong></p>
+
+<pre><code>rm -f /tmp/page-01.png /tmp/page-01.manifest.json
+
+python3 ~/.hermes/skills/generating-handdrawn-slide-images/scripts/generate_image.py \
+  --request /tmp/page.json \
+  --adopt /home/yhy/bailian-output/images/image_xxx.png \
+  --output /tmp/page-01.png \
+  --accept-ratio-mismatch</code></pre>
+
+<div class="warn">
+  <strong>难点 5：manifest 冲突。</strong> 重复执行会报 <code>refusing to overwrite an existing manifest</code>。必须先 <code>rm -f</code> 清理旧文件。
+</div>
+
+<div class="warn">
+  <strong>难点 6：比例不匹配。</strong> bl 默认出正方形，target 是 16:9。用 <code>--accept-ratio-mismatch</code> 接受，或让 bl 指定尺寸。
+</div>
+
+<p><strong>Step 4：尺寸验证</strong></p>
+
+<pre><code>python3 ~/.hermes/skills/generating-handdrawn-slide-images/scripts/image_delivery.py \
+  inspect /tmp/page-01.png --target-ratio 16:9</code></pre>
+
+<h2>五、最终可用的「使用手册」</h2>
+
+<div class="good">
+<pre><code># 1. 设置环境（每次新终端都要做）
+export DASHSCOPE_API_KEY="你的Key"
+export DASHSCOPE_WORKSPACE_ID="你的ID"
+export DASHSCOPE_REGION="beijing"
+
+# 2. 生成原始图
+bl image generate --prompt "你的主题，手绘风格" 
+
+# 3. 找到最新文件
+ls ~/bailian-output/images/ | tail -1
+
+# 4. 收口（替换 HOST 路径）
+rm -f /tmp/page.png /tmp/page.manifest.json
+python3 ~/.hermes/skills/generating-handdrawn-slide-images/scripts/generate_image.py \
+  --request /tmp/page.json \
+  --adopt /home/yhy/bailian-output/images/上一步文件名 \
+  --output /tmp/page.png \
+  --accept-ratio-mismatch
+
+# 5. 验证
+python3 ~/.hermes/skills/generating-handdrawn-slide-images/scripts/image_delivery.py \
+  inspect /tmp/page.png --target-ratio 16:9</code></pre>
+</div>
+
+<h2>六、难点速查表</h2>
+
+<table>
+  <tr><th>#</th><th>问题</th><th>解决</th></tr>
+  <tr><td>1</td><td>PEP 668 禁止 pip install</td><td><code>--break-system-packages</code></td></tr>
+  <tr><td>2</td><td>缺少三个环境变量</td><td>export DASHSCOPE_* 三个变量</td></tr>
+  <tr><td>3</td><td>Workspace ID 获取困难</td><td>bailian.console 创建应用</td></tr>
+  <tr><td>4</td><td>Pro 模型 API 不兼容</td><td>改用 bl + --adopt 混合路径</td></tr>
+  <tr><td>5</td><td>manifest 重复冲突</td><td>生成前 rm -f 清理</td></tr>
+  <tr><td>6</td><td>比例不匹配</td><td>--accept-ratio-mismatch</td></tr>
+</table>
+
+<h2>七、总结</h2>
+
+<p>这个 Skill 的理论设计很优雅——两条路径自动选择，一条命令出图。但现实是：</p>
+
+<ol>
+  <li><strong>Qwen Pro 路径卡在模型兼容性</strong>——脚本和 API 之间的版本差导致无法调通</li>
+  <li><strong>Host-native 路径能跑</strong>——虽然多了 <code>bl</code> 这一步中转，但稳定可用</li>
+  <li><strong>三个环境变量是关键</strong>——每次新终端都要 export，建议写入 <code>~/.bashrc</code></li>
+</ol>
+
+<blockquote>一句话总结：脚本的 Qwen 直连路径在 2026 年 7 月的环境下不可用，但 bl + adopt 的混合路径可行。期待脚本升级支持标准版 qwen-image-2.0。</blockquote>
+
+<hr>
+<p style="color:var(--muted);font-size:0.85em;">作者：Yang Huyue · 2026-07-24 · 踩坑 6 次后成文</p>
+</article>
+</body>
+</html>
